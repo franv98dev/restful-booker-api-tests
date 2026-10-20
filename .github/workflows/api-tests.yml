@@ -126,7 +126,7 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - name: Download Allure report
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: allure-report
           path: allure-report
