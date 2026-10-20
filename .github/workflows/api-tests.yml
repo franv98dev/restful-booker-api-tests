@@ -1,0 +1,139 @@
+name: API Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Nightly run (06:30 UTC) to catch changes in the API under test.
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+    inputs:
+      groups:
+        description: 'Tags to run (e.g. smoke, regression). Empty = all tests.'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Format & compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      # Keeps the wrapper executable even if the repo was committed from Windows.
+      - run: chmod +x mvnw
+      - name: Check formatting (google-java-format)
+        run: ./mvnw -B spotless:check
+      - name: Compile tests
+        run: ./mvnw -B test-compile
+
+  test:
+    name: Run API tests
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: chmod +x mvnw
+
+      - name: Run tests
+        # Retries absorb network blips of the shared public API; retried tests
+        # are still reported as flaky.
+        run: >
+          ./mvnw -B test
+          -Dsurefire.rerunFailingTestsCount=2
+          -Dgroups="${{ github.event.inputs.groups }}"
+        env:
+          API_USERNAME: ${{ secrets.API_USERNAME || 'admin' }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD || 'password123' }}
+
+      - name: Add report metadata
+        if: ${{ !cancelled() }}
+        run: |
+          cp allure/categories.json target/allure-results/
+          {
+            echo "Base.URL=https://restful-booker.herokuapp.com"
+            echo "Java=$(java -version 2>&1 | head -1)"
+            echo "Branch=${GITHUB_REF_NAME}"
+            echo "Commit=${GITHUB_SHA::7}"
+          } > target/allure-results/environment.properties
+
+      # Brings back the history of the published report, so Allure can draw trends.
+      - name: Restore report history
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          mkdir -p target/allure-results/history
+          base="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/history"
+          for f in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
+            curl -sf "$base/$f" -o "target/allure-results/history/$f" || true
+          done
+
+      - name: Generate Allure report
+        if: ${{ !cancelled() }}
+        run: ./mvnw -B allure:report
+
+      - name: Upload Allure report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: target/site/allure-maven-plugin
+          retention-days: 14
+
+      - name: Upload JUnit XML
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
+          retention-days: 7
+
+  # Publishes the latest report of `main` to GitHub Pages.
+  # Kept in its own job: the `github-pages` environment only accepts deployments
+  # from `main`, so pull requests (e.g. from Dependabot) must never reach it.
+  deploy:
+    name: Deploy report to GitHub Pages
+    needs: test
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Download Allure report
+        uses: actions/download-artifact@v5
+        with:
+          name: allure-report
+          path: allure-report
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: allure-report
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Known issue now fixed (remove @KnownIssue)",
+    "matchedStatuses": [
+      "failed"
+    ],
+    "messageRegex": ".*defect seems fixed.*"
+  },
+  {
+    "name": "Product defects (API returned the wrong result)",
+    "matchedStatuses": [
+      "failed"
+    ],
+    "messageRegex": ".*(expectation failed|Expecting|expected).*"
+  },
+  {
+    "name": "Test setup problems (API unavailable or test data not created)",
+    "matchedStatuses": [
+      "broken"
+    ],
+    "messageRegex": ".*(Could not create test booking|Could not get an admin token|Connection|timed out).*"
+  }
+]

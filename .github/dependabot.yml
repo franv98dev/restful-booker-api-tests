@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      rest-assured:
+        patterns: ['io.rest-assured:*']
+      allure:
+        patterns: ['io.qameta.allure*']
+      junit:
+        patterns: ['org.junit*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

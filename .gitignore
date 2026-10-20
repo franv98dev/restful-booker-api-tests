@@ -1,0 +1,16 @@
+# Build output
+target/
+
+# Allure CLI downloaded by allure-maven
+.allure/
+
+# Maven wrapper download
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

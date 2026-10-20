@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "title": "Booking",
+    "type": "object",
+    "required": [
+        "firstname",
+        "lastname",
+        "totalprice",
+        "depositpaid",
+        "bookingdates"
+    ],
+    "properties": {
+        "firstname": {
+            "minLength": 1,
+            "type": "string"
+        },
+        "additionalneeds": {"type": "string"},
+        "bookingdates": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+                "checkin",
+                "checkout"
+            ],
+            "properties": {
+                "checkin": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                },
+                "checkout": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                }
+            }
+        },
+        "totalprice": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "depositpaid": {"type": "boolean"},
+        "lastname": {
+            "minLength": 1,
+            "type": "string"
+        }
+    }
+}

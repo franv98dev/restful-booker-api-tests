@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "title": "Created booking",
+    "type": "object",
+    "required": [
+        "bookingid",
+        "booking"
+    ],
+    "properties": {
+        "booking": {"$ref": "booking.json"},
+        "bookingid": {
+            "type": "integer",
+            "minimum": 1
+        }
+    }
+}
