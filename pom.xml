@@ -20,7 +20,7 @@
     <jackson.version>2.22.3</jackson.version>
     <assertj.version>3.27.7</assertj.version>
     <datafaker.version>2.7.0</datafaker.version>
-    <allure.version>2.35.5</allure.version>
+    <allure.version>3.0.0</allure.version>
     <allure-commandline.version>2.46.1</allure-commandline.version>
 
     <surefire.version>3.6.0</surefire.version>
