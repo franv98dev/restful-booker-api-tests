@@ -31,7 +31,7 @@ public class KnownIssueExtension implements InvocationInterceptor {
     try {
       invocation.proceed();
     } catch (AssertionError expected) {
-      Allure.addAttachment(
+      Allure.attachment(
           "Known issue still present",
           "text/plain",
           label + System.lineSeparator() + System.lineSeparator() + expected.getMessage());
